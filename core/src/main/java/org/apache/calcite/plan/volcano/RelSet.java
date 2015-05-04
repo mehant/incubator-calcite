@@ -16,8 +16,6 @@
  */
 package org.apache.calcite.plan.volcano;
 
-import org.apache.calcite.plan.Convention;
-import org.apache.calcite.plan.ConventionTraitDef;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.RelOptListener;
 import org.apache.calcite.plan.RelOptUtil;
@@ -158,38 +156,11 @@ class RelSet {
       final VolcanoPlanner planner =
           (VolcanoPlanner) cluster.getPlanner();
 
-//      if (planner.root != null
-//          && planner.root.set == this) {
-//        planner.ensureRootConverters();
-//      }
-
-      // Add converters to convert the new subset to each existing subset.
-      for (RelSubset subset1 : subsets) {
-        if (subset1.getConvention() == Convention.NONE) {
-          continue;
-        }
-        final AbstractConverter converter =
-            new AbstractConverter(
-                cluster, subset, ConventionTraitDef.INSTANCE,
-                subset1.getTraitSet());
-        planner.register(converter, subset1);
-      }
-
       subsets.add(subset);
 
-      // Add converters to convert each existing subset to this subset.
-      for (RelSubset subset1 : subsets) {
-        if (subset1 == subset) {
-          continue;
-        }
-        if (subset1.getConvention() == Convention.NONE) {
-          continue;
-        }
-        final AbstractConverter converter =
-            new AbstractConverter(
-                cluster, subset1, ConventionTraitDef.INSTANCE,
-                traits);
-        planner.register(converter, subset);
+      if (planner.root != null
+          && planner.root.set == this) {
+        planner.ensureRootConverters();
       }
 
       if (planner.listener != null) {
