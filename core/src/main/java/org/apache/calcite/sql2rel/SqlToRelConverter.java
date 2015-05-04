@@ -3593,9 +3593,13 @@ public class SqlToRelConverter {
         // will rename "*" to "f0" or something, completely ignore
         // the semantics of "*" in a schema-less table.
         List<String> newLeftFieldNames = Lists.newArrayList();
+        boolean containsStar = false;
         for (int i = 0; i < origLeftInputCount; i++) {
           newLeftInputExpr.add(rexBuilder.makeInputRef(root, i));
           String name = root.getRowType().getFieldNames().get(i);
+          if (name.startsWith("*")) {
+            containsStar = true;
+          }
           newLeftFieldNames.add(name);
         }
 
@@ -3608,11 +3612,13 @@ public class SqlToRelConverter {
           leftJoinKeys.add(origLeftInputCount + leftJoinKeys.size());
         }
 
+        // DIRLL specific : have to pass fieldNames if it contains *.
+        // Otherwise, use Calcite's default behaviour and pass null.
         LogicalProject newLeftInput =
             (LogicalProject) RelOptUtil.createProject(
                 root,
                 newLeftInputExpr,
-                newLeftFieldNames, // DRILL: have to pass fieldNames.
+                containsStar ? newLeftFieldNames : null,
                 true);
 
         // maintain the group by mapping in the new LogicalProject
